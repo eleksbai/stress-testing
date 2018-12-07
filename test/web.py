@@ -1,3 +1,4 @@
+import random
 import time
 import logging, os
 from flask import Flask
@@ -17,11 +18,16 @@ log.addHandler(file_handler)
 @app.route('/')
 def hello_world():
     global c, begin
-    per = 3000
+    chars = ''.join([chr(i) for i in range(35, 127)])
+
+    per = 1000
     if c % per == 0:
         end = time.time()
 
         log.debug('no:{};\tpid:{};\ttimes:{}s/{}req'.format(c, os.getpid(), end - begin, per))
         begin = end
     c += 1
-    return 'Hello World!'
+    text = ''
+    for i in range(1024*50):
+        text += random.choice(chars)
+    return text
