@@ -83,3 +83,40 @@ weblog速率35s/1000req, 端口占用数量1770
 跑1worker, 远程(12.233) 1640 pages/min
 
 
+# 测试3 爬虫代码固定, 测试web服务器性能
+
+## 本地跑uwsgi
+web.log速率35 s/1000req 打开端口数1749 网络流量 2.9Mib(lo)
+本地采集代码速率1702 pages/min
+
+## 本地跑uwsgi
+web.log速率34.7 s/1000req 打开端口数1742 网络流量 1.5Mib(enp0s31f6),1.5Mib(lo)
+远程采集代码速率1723 pages/min
+
+## 本地跑flask run
+web.log速率24.8 s/1000req 打开端口数1908 网络流量 2.21Mib(enp0s31f6)
+远程采集代码速率2426 pages/min
+
+## 本地跑uwsgi 2,2
+web.log速率37 s/1000req * 2 打开端口数3228 网络流量 2.94Mib(enp0s31f6)
+远程采集代码速率3226 pages/min
+
+## 本地跑uwsgi 3,3
+web.log速率40 s/1000req * 3 打开端口数4190 网络流量 3.39Mib(enp0s31f6)
+远程采集代码速率4466 pages/min
+
+# flask web 和 uwsgi的比较结果
+当单线程单进程的时候,flask web性能比uwsgi性能高
+uwsgi 可通过配置多进程进行性能扩充, 但无法达到1:1的增幅,会存在一定损耗.
+
+
+
+#
+
+
+
+
+ 
+
+
+

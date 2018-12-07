@@ -1,16 +1,18 @@
+import datetime
 import random
 import time
 import logging, os
 from flask import Flask
 
+
 app = Flask(__name__)
 c = 0
 begin = time.time()
+now = datetime.datetime.now().strftime('%Y-%m-%d__%H:%M:%S')
 log = logging.getLogger(__file__)
 log.setLevel(os.environ.get('LOG_LEVEL', 'DEBUG'))
-file_handler = logging.FileHandler('web.log')
+file_handler = logging.FileHandler('/vol/hyman-web{}.log'.format(now))
 formatter = logging.Formatter('%(asctime)s-%(name)s-%(levelname)s: %(message)s')
-
 file_handler.setFormatter(formatter)
 log.addHandler(file_handler)
 
