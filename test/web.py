@@ -13,13 +13,15 @@ formatter = logging.Formatter('%(asctime)s-%(name)s-%(levelname)s: %(message)s')
 file_handler.setFormatter(formatter)
 log.addHandler(file_handler)
 
+
 @app.route('/')
 def hello_world():
-    global c ,begin
-    per = 500
+    global c, begin
+    per = 3000
     if c % per == 0:
         end = time.time()
-        log.debug('每{}个请求需经过: {}秒'.format(per, end-begin))
+
+        log.debug('no:{};\tpid:{};\ttimes:{}s/{}req'.format(c, os.getpid(), end - begin, per))
         begin = end
     c += 1
     return 'Hello World!'
