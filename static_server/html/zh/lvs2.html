@@ -1,0 +1,405 @@
+<!-- DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd" -->
+<html lang="zh_CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="Description" content="LVS集群的体系结构"/>
+    <meta name="Keywords" content="负载均衡, 集群, 可扩展性, 高可用, 系统管理, 体系结构"/>
+    <title>Linux服务器集群系统(二)--LVS集群的体系结构</title>
+    <link rel="icon" href="http://www.linuxvirtualserver.org/logo/lvs-16.png" type="image/png">
+    <link rel="home" title="Home" href="http://www.LinuxVirtualServer.org/">
+    <link rel="stylesheet" type="text/css" href="../css/base/content.css" media="all">
+    <link rel="stylesheet" type="text/css" href="../css/base/template.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="../css/cavendish/content.css" title="Cavendish" media="all">
+    <link rel="stylesheet" type="text/css" href="../css/cavendish/template.css" title="Cavendish" media="screen">
+    <style type="text/css">
+        .atitle2 {
+            font-size: 140%;
+            font-weight: bold;
+        }
+
+        .atitle3 {
+            font-size: 120%;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="homepage">
+<div id="container">
+
+    <div id="header">
+        <h1><a href="http://www.linuxvirtualserver.org/index.html" title="返回首页" accesskey="1">首页</a></h1>
+        <ul>
+            <li><a href="http://www.linuxvirtualserver.org/about.html" title="关于LVS项目">关于</a></li>
+            <li><a href="http://www.linuxvirtualserver.org/mailing.html" title="LVS邮件列表与档案">邮件列表</a></li>
+            <li><a href="http://www.linuxvirtualserver.org/Documents.html" title="LVS文档">文档</a></li>
+            <li><a href="http://www.linuxvirtualserver.org/software/index.html" title="LVS软件信息">软件</a></li>
+            <li><a href="http://www.linuxvirtualserver.org/whatis.html" title="LVS介绍">简介</a></li>
+            <li><a href="http://zh.linuxvirtualserver.org" title="LVS中文站点">中文站点</a></li>
+        </ul>
+        <form id="search" method="get" action="#" title="LinuxVirtualServer.org Search">
+            <div>
+                <label for="q" title="Search on LVS site">Search LVS: </label>
+                <input type="hidden" name="cof"
+                       value="DIV:#336699;ALC:#0000ff;GFNT:#0000ff;LC:#0000ff;BGC:white;AH:center;VLC:#663399;GL:0;GALT:#008000">
+                <input type="hidden" name="domains" value="linuxvirtualserver.org">
+                <input type="hidden" name="sitesearch" value="linuxvirtualserver.org">
+                <input id="q" type="text" name="q" size="30">
+                <input id="submit" type="submit" value="Go">
+                <input type="hidden" name="ie" value="gb2312">
+                <input type="hidden" name="oe" value="UTF-8">
+                <input type="hidden" name="hl" value="zh-CN">
+            </div>
+        </form>
+    </div>
+    <!-- closes #header-->
+
+    <div id="mBody">
+        <div id="side">
+
+            <ul id="nav-">
+                <li><a title="Documentation"
+                       href="http://www.linuxvirtualserver.org/zh/index.html"><strong>中文文档</strong></a>
+                    <ul>
+                        <li><a title="LVS项目介绍" href="http://www.linuxvirtualserver.org/zh/lvs1.html">LVS项目介绍</a></li>
+                        <li><a title="LVS集群的体系结构" href="../zh/lvs2.html">LVS集群的体系结构</a></li>
+                        <li><a title="LVS集群中的IP负载均衡技术" href="http://www.linuxvirtualserver.org/zh/lvs3.html">LVS集群中的IP负载均衡技术</a>
+                        </li>
+                        <li><a title="LVS集群的负载调度" href="http://www.linuxvirtualserver.org/zh/lvs4.html">LVS集群的负载调度</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <ul id="nav">
+                <li><a href="http://www.linuxvirtualserver.org/zh/lvs1.html"><strong>本文内容</strong></a>
+                    <ul>
+                        <li><a href=../zh/lvlvs2.html#1">引言</a></li>
+                        <li><a href=../zh/lvlvs2.html#2">LVS集群的通用体系结构</a></li>
+                        <li><a href=../zh/lvlvs2.html#3">可伸缩Web服务</a></li>
+                        <li><a href=../zh/lvlvs2.html#4">可伸缩媒体服务</a></li>
+                        <li><a href=../zh/lvlvs2.html#5">可伸缩Cache服务</a></li>
+                        <li><a href=../zh/lvlvs2.html#6">可伸缩邮件服务</a></li>
+                        <li><a href=../zh/lvlvs2.html#7">小结</a></li>
+                        <li><a href=../zh/lvlvs2.html#resources">参考文献</a></li>
+                        <li><a href=../zh/lvlvs2.html#author1">关于作者</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <hr class="hide">
+            <br>
+            <script type="text/javascript"><!--
+            google_ad_client = "pub-5166885998505756";
+            google_ad_width = 160;
+            google_ad_height = 600;
+            google_ad_format = "160x600_as";
+            google_ad_channel = "9082616221";
+            google_color_border = "336699";
+            google_color_bg = "FFFFFF";
+            google_color_link = "003399";
+            google_color_url = "008000";
+            google_color_text = "000000";
+            //--></script>
+            <script type="text/javascript"
+                    src="#">
+            </script>
+            <br/>
+            <br/>
+            <script type="text/javascript"><!--
+            google_ad_client = "pub-5166885998505756";
+            google_ad_width = 160;
+            google_ad_height = 90;
+            google_ad_format = "160x90_0ads_al";
+            google_ad_channel = "6418630078";
+            google_color_border = "336699";
+            google_color_bg = "FFFFFF";
+            google_color_link = "003399";
+            google_color_url = "008000";
+            google_color_text = "000000";
+            //--></script>
+            <script type="text/javascript"
+                    src="#">
+            </script>
+        </div>
+
+        <div id="mainContent">
+
+            <hr class="hide">
+
+            <h1>Linux服务器集群系统（二）</h1>
+
+            <!-- START SUBTITLE AND CONTENT-->
+            <span class="atitle2">LVS集群的体系结构</span>
+
+            <p><a href=../zh/lvlvs2.html#author1"><font size="2">章文嵩</font></a> (<font size="2"><a
+                    href="mailto:wensong@linux-vs.org">wensong@linux-vs.org</a></font>)
+                <br> 2002 年 4 月</p>
+            <blockquote>本文主要介绍了LVS集群的体系结构。先给出LVS集群的通用体系结构，并讨论了其的设计原则和相应的特点；最后将LVS集群应用于建立可伸缩的Web、Media、Cache和Mail等网络服务。
+            </blockquote>
+            <p><a name="1"><span class="atitle2">1.引言</span></a>
+                <br>在过去的十几年中，Internet从几个研究机构相连为信息共享的网络发展成为拥有大量应用和服务的全球性网络，它正成为人们生活中不可缺少的
+                一部分。虽然Internet发展速度很快，但建设和维护大型网络服务依然是一项挑战性的任务，因为系统必须是高性能的、高可靠的，尤其当访问负载不断增
+                长时，系统必须能被扩展来满足不断增长的性能需求。由于缺少建立可伸缩网络服务的框架和设计方法，这意味着只有拥有非常出色工程和管理人才的机构才能建立
+                和维护大型的网络服务。</p>
+            <p>针对这种情形，本文先给出LVS集群的通用体系结构，并讨论了其的设计原则和相应的特点；最后将LVS集群应用于建立可伸缩的Web、Media、Cache和Mail等网络服务。</p>
+            <p><a name="2"><span class="atitle2">2.LVS集群的通用体系结构</span></a>
+                <br>LVS集群采用IP负载均衡技术和基于内容请求分发技术。调度器具有很好的吞吐率，将请求均衡地转移到不同的服务器上执行，且调度器自动屏蔽掉服
+                务器的故障，从而将一组服务器构成一个高性能的、高可用的虚拟服务器。整个服务器集群的结构对客户是透明的，而且无需修改客户端和服务器端的程序。</p>
+            <!-- START FIGURE--->
+            <p></p>
+            <center><img alt="LVS集群的体系结构" src="../zh/lvs2/lvs-architecture.jpg">
+                <br><b>图1：LVS集群的体系结构</b></center>
+            <p></p>
+            <!-- END FIGURE--->
+            <p>为此，在设计时需要考虑系统的透明性、可伸缩性、高可用性和易管理性。一般来说，LVS集群采用三层结构，其体系结构如图1所示，三层主要组成部分为：<br>
+            </p>
+            <ul>
+                <li><b>负载调度器（load balancer）</b>，它是整个集群对外面的前端机，负责将客户的请求发送到一组服务器上执行，而客户认为服务是来自一个IP地址（我们可称之为虚拟IP地址）上的。</li>
+                <li><b>服务器池（server pool）</b>，是一组真正执行客户请求的服务器，执行的服务有WEB、MAIL、FTP和DNS等。</li>
+                <li><b>共享存储（shared storage）</b>，它为服务器池提供一个共享的存储区，这样很容易使得服务器池拥有相同的内容，提供相同的服务。</li>
+            </ul>
+            <p>调度器是服务器集群系统的唯一入口点（Single Entry
+                Point），它可以采用IP负载均衡技术、基于内容请求分发技术或者两者相结合。在IP负载均衡技术中，需要服务器池拥有相同的内容提供相同的服务。当
+                客户请求到达时，调度器只根据服务器负载情况和设定的调度算法从服务器池中选出一个服务器，将该请求转发到选出的服务器，并记录这个调度；当这个请求的其
+                他报文到达，也会被转发到前面选出的服务器。在基于内容请求分发技术中，服务器可以提供不同的服务，当客户请求到达时，调度器可根据请求的内容选择服务器
+                执行请求。因为所有的操作都是在Linux操作系统核心空间中将完成的，它的调度开销很小，所以它具有很高的吞吐率。</p>
+            <p>服务器池的结点数目是可变的。当整个系统收到的负载超过目前所有结点的处理能力时，可以在服务器池中增加服务器来满足不断增长的请求负载。对大多数
+                网络服务来说，请求间不存在很强的相关性，请求可以在不同的结点上并行执行，所以整个系统的性能基本上可以随着服务器池的结点数目增加而线性增长。 </p>
+            <p>共享存储通常是数据库、网络文件系统或者分布式文件系统。服务器结点需要动态更新的数据一般存储在数据库系统中，同时数据库会保证并发
+                访问时数据的一致性。静态的数据可以存储在网络文件系统（如NFS/CIFS）中，但网络文件系统的伸缩能力有限，一般来说，NFS/CIFS服务器只能
+                支持3~6个繁忙的服务器结点。对于规模较大的集群系统，可以考虑用分布式文件系统，如AFS[1]、GFS[2.3]、Coda[4]和
+                Intermezzo[5]等。分布式文件系统可为各服务器提供共享的存储区，它们访问分布式文件系统就像访问本地文件系统一样，同时分布式文件系统可提
+                供良好的伸缩性和可用性。此外，当不同服务器上的应用程序同时读写访问分布式文件系统上同一资源时，应用程序的访问冲突需要消解才能使得资源处于一致状
+                态。这需要一个分布式锁管理器（Distributed Lock
+                Manager），它可能是分布式文件系统内部提供的，也可能是外部的。开发者在写应用程序时，可以使用分布式锁管理器来保证应用程序在不同结点上并发访
+                问的一致性。 </p>
+            <p>负载调度器、服务器池和共享存储系统通过高速网络相连接，如100Mbps交换网络、Myrinet和Gigabit网络等。使用高速的网络，主要为避免当系统规模扩大时互联网络成为整个系统的瓶颈。
+            </p>
+            <p>Graphic Monitor是为系统管理员提供整个集群系统的监视器，它可以监视系统的状态。Graphic
+                Monitor是基于浏览器的，所以无论管理员在本地还是异地都可以监测系统的状况。为了安全的原因，浏览器要通过HTTPS（Secure
+                HTTP）协议和身份认证后，才能进行系统监测，并进行系统的配置和管理。 </p>
+            <p><span class="atitle3">2.1. 为什么使用层次的体系结构</span><br></p>
+            <p>层次的体系结构可以使得层与层之间相互独立，每一个层次提供不同的功能，在一个层次可以重用不同的已有软件。例如，调度器层提供了负载平衡、可伸缩
+                性和高可用性等，在服务器层可以运行不同的网络服务，如Web、Cache、Mail和Media等，来提供不同的可伸缩网络服务。明确的功能划分和清晰
+                的层次结构使得系统容易建设，以后整个系统容易维护，而且系统的性能容易被扩展。 </p>
+            <p><span class="atitle3">2.2. 为什么是共享存储</span><br>
+            </p>
+            <p>共享存储如分布式文件系统在这个LVS集群系统是可选项。当网络服务需要有相同的内容，共享存储是很好的选择，否则每台服务器需要将相同的
+                内容复制到本地硬盘上。当系统存储的内容越多，这种无共享结构（Shared-nothing
+                Structure）的代价越大，因为每台服务器需要一样大的存储空间，任何的更新需要涉及到每台服务器，系统的维护代价会非常高。 </p>
+            <p>共享存储为服务器组提供统一的存储空间，这使得系统的内容维护工作比较轻松，如Webmaster只需要更新共享存储中的页面，对所有
+                的服务器都有效。分布式文件系统提供良好的伸缩性和可用性，当分布式文件系统的存储空间增加时，所有服务器的存储空间也随之增大。对于大多数
+                Internet服务来说，它们都是读密集型（Read-intensive）的应用，分布式文件系统在每台服务器使用本地硬盘作Cache（如
+                2Gbytes的空间），可以使得访问分布式文件系统本地的速度接近于访问本地硬盘。 </p>
+            <p>此外，存储硬件技术的发展也促使从无共享的集群向共享存储的集群迁移。存储区域网（Storage Area
+                Networks）技术解决了集群的每个结点可以直接连接/共享一个庞大的硬盘阵列，硬件厂商也提供多种硬盘共享技术，如光纤通道（Fiber
+                Channel）、共享SCSI（Shared
+                SCSI）。InfiniBand是一个通用的高性能I/O规范，使得存储区域网中以更低的延时传输I/O消息和集群通讯消息，并且提供很好的伸缩性。
+                InfiniBand得到绝大多数的大厂商的支持，如Compaq、Dell、Hewlett-Packard、IBM、Intel、Microsoft
+                和SUN Microsystems等，它正在成为一个业界的标准。这些技术的发展使得共享存储变得容易，规模生产也会使得成本逐步降低。 </p>
+            <p><span class="atitle3">2.3. 高可用性</span><br>
+            </p>
+            <p>集群系统的特点是它在软硬件上都有冗余。系统的高可用性可以通过检测节点或服务进程故障和正确地重置系统来实现，使得系统收到的请求能被存活的结点处理。
+            </p>
+            <p>通常，我们在调度器上有资源监测进程来时刻监视各个服务器结点的健康状况。当服务器对ICMP
+                ping不可达时或者探测她的网络服务在指定的时间没有响应时，资源监测进程通知操作系统内核将该服务器从调度列表中删除或者失效。这样，新的服务请求就
+                不会被调度到坏的结点。资源监测进程能通过电子邮件或传呼机向管理员报告故障。一旦监测进程到服务器恢复工作，通知调度器将其加入调度列表进行调度。另
+                外，通过系统提供的管理程序，管理员可发命令随时可以将新机器加入服务来提高系统的处理性能，也可以将已有的服务器切出服务，以便对服务器进行系统维护。
+            </p>
+            <p>现在前端的调度器有可能成为系统的单一失效点（Single Point of
+                Failure）。一般来说，调度器的可靠性较高，因为调度器上运行的程序较少而且大部分程序早已经遍历过，但我们不能排除硬件老化、网络线路或者人为误
+                操作等主要故障。为了避免调度器失效而导致整个系统不能工作，我们需要设立一个从调度器作为主调度器的备份。两个心跳（Heartbeat）进程[6]分
+                别在主、从调度器上运行，它们通过串口线和UDP等心跳线来相互定时地汇报各自的健康状况。当从调度器不能听得主调度器的心跳时，从调度器通过ARP欺骗
+                （Gratuitous ARP）来接管集群对外的Virtual IP
+                Address，同时接管主调度器的工作来提供负载调度服务。当主调度器恢复时，这里有两种方法，一是主调度器自动变成从调度器，二是从调度器释放
+                Virtual IP Address，主调度器收回Virtual IP
+                Address并提供负载调度服务。这里，多条心跳线可以使得因心跳线故障导致误判（即从调度器认为主调度器已经失效，其实主调度器还在正常工作）的概论
+                降到最低。 </p>
+            <p>通常，当主调度器失效时，主调度器上所有已建立连接的状态信息将丢失，已有的连接会中断。客户需要向重新连接，从调度器才会将新连接调
+                度到各个服务器上，这对客户会造成一定的不便。为此，IPVS调度器在Linux
+                内核中实现一种高效状态同步机制，将主调度器的状态信息及时地同步到从调度器。当从调度器接管时，绝大部分已建立的连接会持续下去。 </p>
+            <p><a name="3"><span class="atitle2">3.可伸缩Web服务</span></a>
+            </p>
+            <p>基于LVS的Web集群的体系结构如图2所示：第一层是负载调度器，一般采用IP负载均衡技术，可以使得整个系统有较高的吞吐率；第二层是
+                Web服务器池，在每个结点上可以分别运行HTTP服务或HTTPS服务、或者两者都运行；第三层是共享存储，它可以是数据库，可以是网络文件系统或分布
+                式文件系统，或者是三者的混合。集群中各结点是通过高速网络相连接的。<!-- START FIGURE--->
+            </p>
+            <p></p>
+            <center><img alt="基于LVS的Web集群" src="../zh/lvs2/web-cluster.jpg">
+                <br><b>图2：基于LVS的Web集群</b></center>
+            <p></p>
+            <!-- END FIGURE--->
+
+            <p>对于动态页面（如PHP、JSP和ASP等），需要访问的动态数据一般存储在数据库服务器中。数据库服务运行在独立的服务器上，为所有Web服务器
+                共享。无论同一Web服务器上多个动态页面访问同一数据，还是不同Web服务器上多个动态页面访问同一数据，数据库服务器有锁机制使得这些访问有序地进
+                行，从而保证数据的一致性。 </p>
+            <p>对于静态的页面和文件（如HTML文档和图片等），可以存储在网络文件系统或者分布式文件系统中。至于选择哪一种，看系统的规模和需求
+                而定。通过共享的网络文件系统或者分布式文件系统，Webmaster可以看到统一的文档存储空间，维护和更新页面比较方便，对共享存储中页面的修改对所
+                有的服务器都有效。 </p>
+            <p>在这种结构下，当所有服务器结点超载时，管理员可以很快地加入新的服务器结点来处理请求，而无需将Web文档等复制到结点的本地硬盘上。
+            </p>
+            <p>有些Web服务可能用到HTTP Cookie，它是将数据存储在客户的浏览器来追踪和标识客户的机制。使用HTTP
+                Cookie后，来同一客户的不同连接存在相关性，这些连接必须被发送到同一Web服务器。一些Web服务使用安全的HTTPS协议，它是HTTP协议加
+                SSL（Secure Socket
+                Layer）协议。另有些Web服务可能使用安全的HTTPS协议，它是HTTP协议加SSL协议。当客户访问HTTPS服务（HTTPS的缺省端口为
+                443）时，会先建立一个SSL连接，来交换对称公钥加密的证书并协商一个SSL Key，来加密以后的会话。在SSL
+                Key的生命周期内，后续的所有HTTPS连接都使用这个SSL
+                Key，所以同一客户的不同HTTPS连接也存在相关性。针对这些需要，IPVS调度器提供了持久服务的功能，它可以使得在设定的时间内，来自同一IP地
+                址的不同连接会被发送到集群中同一个服务器结点，可以很好地解决客户连接的相关性问题。 </p>
+            <p><a name="4"><span class="atitle2">4.可伸缩媒体服务</span></a>
+            </p>
+            <p>基于LVS的媒体集群的体系结构如图3所示：第一层是负载调度器，一般采用IP负载均衡技术，可以使得整个系统有较高的吞吐率；第二层是
+                Web服务器池，在每个结点上可以运行相应的媒体服务；第三层是共享存储，通过网络文件系统/分布式文件系统存储媒体节目。集群中各结点是通过高速网络相
+                连接。<!-- START FIGURE--->
+            </p>
+            <p></p>
+            <center><img alt="基于LVS的媒体集群" src="../zh/lvs2/media-cluster.jpg">
+                <br><b>图3：基于LVS的媒体集群</b></center>
+            <p></p>
+            <!-- END FIGURE--->
+            <p>IPVS负载调度器一般使用直接路由方法（即VS/DR方法，将在以后文章中详细叙述），来架构媒体集群系统。调度器将媒体服务请求较均衡地分发到
+                各个服务器上，而媒体服务器将响应数据直接返回给客户，这样可以使得整个媒体集群系统具有很好的伸缩性。 </p>
+            <p>媒体服务器可以运行各种媒体服务软件。目前，LVS集群对于Real Media、Windows Media和Apple
+                Quicktime媒体服务都有很好的支持，都有真实的系统在运行。一般来说，流媒体服务都会使用一个TCP连接（如RTSP协议：Real-Time
+                Streaming
+                Protocol）进行带宽的协商和流速的控制，通过UDP将流数据返回客户。这里，IPVS调度器提供功能将TCP和UDP集中考虑，保证来自同一客户
+                的媒体TCP和UDP连接会被转发到集群中同一台媒体服务器，使得媒体服务准确无误地进行。 </p>
+            <p>共享存储是媒体集群系统中最关键的问题，因为媒体文件往往非常大（一部片子需要几百兆到几千兆的存储空间），这对存储的容量和读的速度
+                有较高的要求。对于规模较小的媒体集群系统，例如有3至6个媒体服务器结点，存储系统可以考虑用带千兆网卡的Linux服务器，使用软件RAID和日志型
+                文件系统，再运行内核的NFS服务，会有不错的效果。对于规模较大的媒体集群系统，最好选择对文件分段（File
+                Stripping）存储和文件缓存有较好支持的分布式文件系统；媒体文件分段存储在分布式文件系统的多个存储结点上，可以提高文件系统的性能和存储结点
+                间的负载均衡；媒体文件在媒体服务器上自动地被缓存，可提高文件的访问速度。否则，可以考虑自己在媒体服务器上开发相应的工具，如缓存工具能定时地统计出
+                最近的热点媒体文件，将热点文件复制到本地硬盘上，并替换缓存中的非热点文件，最后通知其他媒体服务器结点它所缓存的媒体文件以及负载情况；在媒体服务器
+                上有应用层调度工具，它收到客户的媒体服务请求，若所请求的媒体文件缓存在本地硬盘上，则直接转给本地媒体服务进程服务，否则先考虑该文件是否被其他媒体
+                服务器缓存；如该文件被其他服务器缓存并且该服务器不忙，则将请求转给该服务器上的媒体服务进程处理，否则直接转给本地媒体服务进程，从后端的共享存储中
+                读出媒体文件。 </p>
+            <p>共享存储的好处是媒体文件的管理人员看到统一的存储空间，使得媒体文件维护工作比较方便。当客户访问不断增加使得整个系统超载时，管理员可以很快地加入新的媒体服务器结点来处理请求。
+            </p>
+            <p>Real公司以其高压缩比的音频视频格式、Real媒体服务器和媒体播放器RealPlayer而闻名。Real公司正在使用以上结构将由
+                20多台服务器组成的LVS可伸缩Web和媒体集群，为其全球用户提供Web和音频视频服务。Real公司的高级技术主管声称LVS击败所有他们尝试过的
+                商品化负载均衡产品[7]。 </p>
+            <p><a name="5"><span class="atitle2">5.可伸缩Cache服务</span></a>
+            </p>
+            <p>有效的网络Cache系统可以大大地减少网络流量、降低响应延时以及服务器的负载。但是，若Cache服务器超载而不能及时地处理请求，反
+                而会增加响应延时。所以，Cache服务的可伸缩性很重要，当系统负载不断增长时，整个系统能被扩展来提高Cache服务的处理能力。尤其，在主干网上的
+                Cache服务可能需要几个Gbps的吞吐率，单台服务器（例如SUN目前最高端的Enterprise
+                10000服务器）远不能达到这个吞吐率。可见，通过PC服务器集群实现可伸缩Cache服务是很有效的方法，也是性能价格比最高的方法。 </p>
+            <p>基于LVS的Cache集群的体系结构如图4所示：第一层是负载调度器，一般采用IP负载均衡技术，可以使得整个系统有较高的吞吐率；
+                第二层是Cache服务器池，一般Cache服务器放置在接近主干Internet连接处，它们可以分布在不同的网络中。调度器可以有多个，放在离客户接
+                近的地方。<!-- START FIGURE--->
+            </p>
+            <p></p>
+            <center><img alt="基于LVS的Cache集群" src="../zh/lvs2/cache-cluster.jpg">
+                <br><b>图4：基于LVS的Cache集群</b></center>
+            <p></p>
+            <!-- END FIGURE--->
+            <p>IPVS负载调度器一般使用IP隧道方法（即VS/TUN方法，将在以后文章中详细叙述），来架构Cache集群系统，因为Cache服务器可能被
+                放置不同的地方（例如在接近主干Internet连接处），而调度器与Cache服务器池可能不在同一个物理网络中。采用VS/TUN方法，调度器只调度
+                Web
+                Cache请求，而Cache服务器将响应数据直接返回给客户。在请求对象不能在本地命中的情况下，Cache服务器要向源服务器发请求，将结果取回，最
+                后将结果返回给客户；若采用NAT技术的商品化调度器，需要四次进出调度器，完成这个请求。而用VS/TUN方法（或者VS/DR方法），调度器只调度一
+                次请求，其他三次都由Cache服务器直接访问Internet完成。所以，这种方法对Cache集群系统特别有效。 </p>
+            <p>Cache服务器采用本地硬盘来存储可缓存的对象，因为存储可缓存的对象是写操作，且占有一定的比例，通过本地硬盘可以提高I/O的访
+                问速度。Cache服务器间有专用的多播通道（Multicast Channel），通过ICP协议（Internet Cache
+                Protocol）来交互信息。当一台Cache服务器在本地硬盘中未命中当前请求时，它可以通过ICP查询其他Cache服务器是否有请求对象的副本，
+                若存在，则从邻近的Cache服务器取该对象的副本，这样可以进一步提高Cache服务的命中率。 </p>
+            <p>为150多所大学和地区服务的英国国家JANET Web
+                Cache网在1999年11月用以上LVS结构实现可伸缩的Cache集群[8]，只用了原有50多台相互独立Cache服务器的一半，用户反映网络速
+                度跟夏天一样快（学生放暑假）。可见，通过负载调度可以摸平单台服务器访问的毛刺（Burst），提高整个系统的资源利用率。 </p>
+            <p><a name="6"><span class="atitle2">6.可伸缩邮件服务</span></a>
+            </p>
+            <p>随着Internet用户不断增长，很多ISP面临他们邮件服务器超载的问题。当邮件服务器不能容纳更多的用户帐号时，有些ISP买更高档
+                的服务器来代替原有的，将原有服务器的信息（如用户邮件）迁移到新服务器是很繁琐的工作，会造成服务的中断；有些ISP设置新的服务器和新的邮件域名，新
+                的邮件用户放置在新的服务器上，如上海电信现在用不同的邮件服务器public1.sta.net.cn、public2.sta.net.cn到
+                public9.sta.net.cn放置用户的邮件帐号，这样静态地将用户分割到不同的服务器上，会造成邮件服务器负载不平衡，系统的资源利用率低，对
+                用户来说邮件的地址比较难记。<!-- START FIGURE--->
+            </p>
+            <p></p>
+            <center><img alt="基于LVS的可伸缩邮件集群" src="../zh/lvs2/mail-cluster.jpg">
+                <br><b>图5：基于LVS的可伸缩邮件集群</b></center>
+            <p></p>
+            <!-- END FIGURE--->
+            <p>
+            </p>
+            <p>可以利用LVS框架实现高可伸缩、高可用的邮件服务系统。它的体系结构如图5所示：在前端是一个采用IP负载均衡技术的负载调度器；第二层
+                是服务器池，有LDAP（Light-weight Directory Access
+                Protocol）服务器和一组邮件服务器。第三层是数据存储，通过分布式文件系统来存储用户的邮件。集群中各结点是通过高速网络相连接。 </p>
+            <p>用户的信息如用户名、口令、主目录和邮件容量限额等存储在LDAP服务器中，可以通过HTTPS让管理员进行用户管理。在各个邮件服务
+                器上运行SMTP（Simple Mail Transfer Protocol）、POP3（Post Office Protocol
+                version 3）、IMAP4（Internet Message Access Protocol version
+                4）和HTTP/HTTPS服务。SMTP接受和转发用户的邮件，SMTP服务进程查询LDAP服务器获得用户信息，再存储邮件。POP3和IMAP4通
+                过LDAP服务器获得用户信息，口令验证后，处理用户的邮件访问请求。这里，需要有机制避免不同服务器上的SMTP、POP3和IMAP4服务进程对用户
+                邮件的读写冲突。HTTP/HTTPS服务是让用户通过浏览器可以访问邮件。 </p>
+            <p>IPVS调度器将SMTP、POP3、IMAP4和HTTP/HTTPS请求流负载较均衡地分发到各邮件服务器上，从上面各服务的处理
+                流程来看，不管请求被发送到哪一台邮件服务器处理，其结果是一样的。这里，将SMTP、POP3、IMAP4和HTTP/HTTPS运行在各个邮件服务器
+                上进行集中调度，有利于提高整个系统的资源利用率。 </p>
+            <p>系统中可能的瓶颈是LDAP服务器，对LDAP服务中B+树的参数进行优化，再结合高端的服务器，可以获得较高的性能。若分布式文件系
+                统没有多个存储结点间的负载均衡机制，则需要相应的邮件迁移机制来避免邮件访问的倾斜。 </p>
+            <p>这样，这个集群系统对用户来说就像一个高性能、高可靠的邮件服务器（例如上海电信只要用一个邮件域名
+                public.sta.net.cn就可以）。当邮件用户不断增长时，只要在集群中增加服务器结点和存储结点。用户信息的集中存储使得用户管理变得容易，
+                且集群系统有利于提高资源利用率。 </p>
+            <p><a name="7"><span class="atitle2">7.小结</span></a>
+            </p>
+            <p>本文给出LVS集群的通用体系结构，并讨论了它的设计原则和相应的特点；最后将LVS集群应用于建立可伸缩的Web、Media、
+                Cache和Mail网络服务，并指出了系统架设时应注意的要点。我们将在后续的文章中详细解释LVS集群的技术、实现和应用。&nbsp;<!-- RESOURCES-->
+            </p>
+            <p><a name="resources"><span class="atitle2">参考文献</span></a>
+            </p>
+            <ol>
+                <li>J.H. Howard. An Overview of the Andrew File System. In
+                    Proceedings of the USENIX Winter Technical Conference, Dallas, TX, USA,
+                    February 1998.
+                </li>
+                <li>Kenneth W. Preslan, Andrew P. Barry,
+                    Jonathan E. Brassow, Grant M. Erickson, Erling Nygaard, Christopher J.
+                    Sabol, Steven R. Soltis, David C. Teigland, and Matthew T. O'Keefe. A
+                    64-bit, Shared Disk File System for Linux. In Proceeding of 16th IEEE
+                    Mass Storage Systems Symposium, San Diego, CA, USA. March 15-18, 1999.
+                </li>
+                <li>Global File System Website. <a href="http://www.globalfilesystem.org/">http://www.globalfilesystem.org</a>.
+                </li>
+                <li>Coda File System Website. <a href="http://www.coda.cs.cmu.edu/">http://www.coda.cs.cmu.edu</a>.</li>
+                <li>InterMezzo File System Website. <a href="http://www.inter-mezzo.org/">http://www.inter-mezzo.org</a>.
+                </li>
+                <li>Alan Robertson, et al. Linux High Availability Project. <a href="http://www.linux-ha.org/">http://www.linux-ha.org</a>.
+                </li>
+                <li>Jerry Glomph Black. LVS testimonials from Real Networks. March 2000. <a
+                        href="http://marc.theaimsgroup.com/?l=linux-virtual-server&amp;m=95385809030794&amp;w=2">http://marc.theaimsgroup.com/?l=linux-virtual-server&amp;m=95385809030794&amp;w=2</a>
+                </li>
+                <li>Michael Sparks. Load Balancing the UK National JANET Web Cache Service Using Linux Virtual Servers.
+                    November 1999.
+                    <a href="http://wwwcache.ja.net/JanetService/PilotService.html">http://wwwcache.ja.net/JanetService/PilotService.html</a>.
+                </li>
+            </ol>
+            <!-- AUTHOR BIOS-->
+            <!-- Make author heading singular or plural as needed-->
+            <a name="author1"><span class="atitle2">关于作者</span></a>
+
+            <p>章文嵩，开放源码及
+                Linux内核的开发者，著名的Linux集群项目－－LVS(Linux Virtual
+                Server)的创始人和主要开发人员。他目前工作于国家并行与分布式处理重点实验室，主要从事集群技术、操作系统、对象存储与数据库的研究。他一直在自
+                由软件的开发上花费大量时间，并以此为乐。</p>
+
+        </div>
+        <!-- closes #mainContent-->
+
+    </div>
+    <!-- closes #mBody-->
+
+    <div id="footer">
+        <p>注：本文最早发表在IBM developerWorks杂志</p>
+    </div>
+
+</div>
+<!-- closes #container -->
+
+<script src="#" type="text/javascript">
+</script>
+<script type="text/javascript">
+    _uacct = "UA-405205-1";
+    urchinTracker();
+</script>
+
+</body>
+</html>
